@@ -695,7 +695,7 @@ function Invoke-AllIRModules {
 	Get-KrbSessions
 }
 
-Set-ExecutionPolicy RemoteSigned -Scope Process
+Set-ExecutionPolicy Unrestricted -Scope Process
 
 if ($module) {
     if ($folder) {
