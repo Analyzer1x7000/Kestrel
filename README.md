@@ -1,7 +1,7 @@
 ![image](https://github.com/Analyzer1x7000/Kestrel/assets/103800652/0565b017-9211-4a1f-91ab-97a03677fa3e)
 
 
-# Kestrel
+# About Kestrel
 Kestrel is a PowerShell script designed to be used via CrowdStrike RTR as a `CloudFile`. Similar to KAPE, it pulls critical forensic artifacts from a target during IR, so that the artifacts can be analyzed on a separate forensic workstation.
 
 Kestrel contains several modules that can be run individually, or all at once.
@@ -11,16 +11,28 @@ Create a new script via `Configuration` -> `Response Scripts & Files` and name i
 
 ![image](https://github.com/Analyzer1x7000/Kestrel/assets/103800652/b0b05280-712d-4aaa-bd32-8f8842a13691)
 
-## Usage
+## Running Kestrel from CrowdStrike RTR Console
 
-To run Kestrel in your CrowdStrike RTR console:
+To run Kestrel from the CrowdStrike RTR console:
 ```
   runscript -CloudFile='Kestrel' -CommandLine='-module all'
   OR 
   runscript -CloudFile='Kestrel' -CommandLine='-module Services'"
 ```
 
-## FEATURES
+## Running Kestrel Directly w/ Powershell
+
+- Set execution policy to Unrestricted under the scope of the current process
+
+`Set-ExecutionPolicy Unrestricted -Scope Process`
+
+- Run Kestrel.ps1 with the appropriate parameter(s)
+
+`.\Kestrel.ps1 -module all`
+
+![image](https://github.com/Analyzer1x7000/Kestrel/assets/103800652/3628e476-7e22-4449-be65-1f672ebff4b0)
+
+## Features
 ```
 PARAMETERS
   -module all           : run all modules
@@ -69,7 +81,4 @@ MODULES
     BrowserExtensions     : Get list of extensions for Chrome and Firefox
     KrbSessions           : Get list of kerberos sessions
 ```
-
-## Example
-
 
