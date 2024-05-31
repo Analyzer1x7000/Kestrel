@@ -2,7 +2,7 @@
 
 
 # Kestrel
-Kestrel is a PowerShell script designed to be used via CrowdStrike RTR as a `CloudFile`. Similar to KAPE, it pulls critical forensic artifacts from a target during IR, for direct analysis on a forensic workstation.
+Kestrel is a PowerShell script designed to be used via CrowdStrike RTR as a `CloudFile`. Similar to KAPE, it pulls critical forensic artifacts from a target during IR, so that the artifacts can be analyzed on a separate forensic workstation.
 
 Kestrel contains several modules that can be run individually, or all at once.
 
