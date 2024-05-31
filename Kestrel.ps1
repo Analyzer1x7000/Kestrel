@@ -695,8 +695,6 @@ function Invoke-AllIRModules {
 	Get-KrbSessions
 }
 
-Set-ExecutionPolicy Unrestricted -Scope Process
-
 if ($module) {
     if ($folder) {
         if (-Not (Test-Path $folder)) {
