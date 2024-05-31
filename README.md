@@ -39,24 +39,24 @@ MODULES
   {Forensics - Evidence of Execution}
     Prefetch              : Get list of files in prefetch
     PEFiles               : Get list of PE files and hashes in user writeable locations
-    (NEW) Amcache               : Get a copy of Amcache.hve 
-    (NEW) RecycleBin            : Get a copy of the contents of $Recycle.Bin
-    (NEW) JumpLists             : Get a copy of JumpLists (AutomaticDestinations & CustomDestinations)
-    (NEW) LastVisitedMRU        : Get a copy of LastVisitedPidlMRU from NTUSER.DAT hive
-    (NEW) UserAssist            : Get a copy of UserAssist from NTUSER.DAT hive
-    (NEW) SRUM                  : Get a copy of SRUDB.DAT
+    Amcache               : Get a copy of Amcache.hve 
+    JumpLists             : Get a copy of JumpLists (AutomaticDestinations & CustomDestinations)
+    LastVisitedMRU        : Get a copy of LastVisitedPidlMRU from NTUSER.DAT hive
+    UserAssist            : Get a copy of UserAssist from NTUSER.DAT hive
+    SRUM                  : Get a copy of SRUDB.DAT
   
   {Forensics - Deleted Items & File Existence}
-    (NEW) Shimcache             : Get a copy of AppCompatCache from SYSTEM hive
-    (NEW) Thumbcache            : Get a copy of the Thumbcache from user's %AppData% folder
-    (NEW) WordWheelQuery        : Get a copy of WordWheelQuery key from NTUSER.DAT hive
-    (NEW) UserTypedPaths        : Get a copy of TypedPaths from NTUSER.DAT hive
+    RecycleBin            : Get a copy of the contents of $Recycle.Bin
+    Shimcache             : Get a copy of AppCompatCache from SYSTEM hive
+    Thumbcache            : Get a copy of the Thumbcache from user's %AppData% folder
+    WordWheelQuery        : Get a copy of WordWheelQuery key from NTUSER.DAT hive
+    UserTypedPaths        : Get a copy of TypedPaths from NTUSER.DAT hive
   
   {Forensics - Files & Folders Opened}
     LNKFiles              : Get LNK files on desktop and recent files list
     RecentFiles           : Get history of recent files
-    (NEW) OpenSaveMRU           : Get a copy of OpenSavePidlMRU from NTUSER.DAT hive
-    (NEW) OfficeRecentfiles     : Get Office file MRU lists from NTUSER.DAT hive
+    OpenSaveMRU           : Get a copy of OpenSavePidlMRU from NTUSER.DAT hive
+    OfficeRecentfiles     : Get Office file MRU lists from NTUSER.DAT hive
   
   {Malware - Miscellaneous}
     OfficeFiles           : Get list of office docs and hashes in user writeable locations
