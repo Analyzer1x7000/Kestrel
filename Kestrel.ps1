@@ -28,22 +28,17 @@ MODULES
   {Forensics - Evidence of Execution}
     Prefetch              : Get list of files in prefetch
     PEFiles               : Get list of PE files and hashes in user writeable locations
-    Amcache               : Get a copy of Amcache.hve 
     JumpLists             : Get a copy of JumpLists (AutomaticDestinations & CustomDestinations)
-    LastVisitedMRU        : Get a copy of LastVisitedPidlMRU from NTUSER.DAT hive
-    UserAssist            : Get a copy of UserAssist from NTUSER.DAT hive
     SRUM                  : Get a copy of SRUDB.DAT
   
   {Forensics - Deleted Items & File Existence}
     RecycleBin            : Get a copy of the contents of $Recycle.Bin
-    Shimcache             : Get a copy of AppCompatCache from SYSTEM hive
     Thumbcache            : Get a copy of the Thumbcache from user's %AppData% folder
     WordWheelQuery        : Get a copy of WordWheelQuery key from NTUSER.DAT hive
     UserTypedPaths        : Get a copy of TypedPaths from NTUSER.DAT hive
   
   {Forensics - Files & Folders Opened}
     LNKFiles              : Get LNK files on desktop and recent files list
-    RecentFiles           : Get history of recent files
     OpenSaveMRU           : Get a copy of OpenSavePidlMRU from NTUSER.DAT hive
     OfficeRecentfiles     : Get Office file MRU lists from NTUSER.DAT hive
   
@@ -162,19 +157,6 @@ function Get-PEFiles {
     Write-Output "[ done ]"
 }
 
-function Get-Amcache {
-    Write-Output "[+] Gathering Amcache.hve ..."
-    $ir_amcache_path = Join-Path $Global:irPath "\${ComputerName}_Amcache"
-    New-Item -Path $ir_amcache_path -Type Directory -Force | Out-Null
-
-    $amcache_path = "C:\Windows\AppCompat\Programs\Amcache.hve"
-    if (Test-Path $amcache_path) {
-        Copy-Item -Path $amcache_path -Destination $ir_amcache_path
-    }
-
-    Write-Output "[ done ]"
-}
-
 function Get-JumpLists {
     Write-Output "[+] Gathering JumpLists ..."
     $ir_jumplists_path = Join-Path $Global:irPath "\${ComputerName}_JumpLists"
@@ -186,52 +168,6 @@ function Get-JumpLists {
         $jumplists = Get-ChildItem -Path $path -Recurse -ErrorAction SilentlyContinue
         foreach ($file in $jumplists) {
             Copy-Item -Path $file.FullName -Destination $ir_jumplists_path -ErrorAction SilentlyContinue
-        }
-    }
-
-    Write-Output "[ done ]"
-}
-
-function Get-LastVisitedMRU {
-    Write-Output "[+] Gathering LastVisitedPidlMRU from NTUSER.DAT ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_LastVisitedMRU.txt"
-
-    $ntuserPath = "C:\Users\*\NTUSER.DAT"
-    $users = Get-ChildItem "C:\Users" | Where-Object { Test-Path "$($_.FullName)\NTUSER.DAT" }
-
-    foreach ($user in $users) {
-        $username = $user.Name
-        $ntuser = "$($user.FullName)\NTUSER.DAT"
-        if (Test-Path $ntuser) {
-            reg.exe load HKU\TempHive $ntuser | Out-Null
-            $lastVisitedMRU = Get-ItemProperty -Path "HKU\TempHive\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\LastVisitedPidlMRU"
-            reg.exe unload HKU\TempHive | Out-Null
-            Add-Content -Path $outputFile -Value "[$username]"
-            Add-Content -Path $outputFile -Value $lastVisitedMRU
-            Add-Content -Path $outputFile -Value ""
-        }
-    }
-
-    Write-Output "[ done ]"
-}
-
-function Get-UserAssist {
-    Write-Output "[+] Gathering UserAssist from NTUSER.DAT ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_UserAssist.txt"
-
-    $ntuserPath = "C:\Users\*\NTUSER.DAT"
-    $users = Get-ChildItem "C:\Users" | Where-Object { Test-Path "$($_.FullName)\NTUSER.DAT" }
-
-    foreach ($user in $users) {
-        $username = $user.Name
-        $ntuser = "$($user.FullName)\NTUSER.DAT"
-        if (Test-Path $ntuser) {
-            reg.exe load HKU\TempHive $ntuser | Out-Null
-            $userAssist = Get-ItemProperty -Path "HKU\TempHive\Software\Microsoft\Windows\CurrentVersion\Explorer\UserAssist"
-            reg.exe unload HKU\TempHive | Out-Null
-            Add-Content -Path $outputFile -Value "[$username]"
-            Add-Content -Path $outputFile -Value $userAssist
-            Add-Content -Path $outputFile -Value ""
         }
     }
 
@@ -261,21 +197,6 @@ function Get-RecycleBin {
     $recycleBinItems = Get-ChildItem -Path $recycleBinPath -Recurse -ErrorAction SilentlyContinue
     foreach ($item in $recycleBinItems) {
         Copy-Item -Path $item.FullName -Destination $ir_recyclebin_path -ErrorAction SilentlyContinue
-    }
-
-    Write-Output "[ done ]"
-}
-
-function Get-Shimcache {
-    Write-Output "[+] Gathering Shimcache data ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_Shimcache.txt"
-
-    $systemHivePath = "C:\Windows\System32\config\SYSTEM"
-    if (Test-Path $systemHivePath) {
-        reg.exe load HKLM\TempSystem $systemHivePath | Out-Null
-        $shimCache = Get-ItemProperty -Path "HKLM\TempSystem\ControlSet001\Control\Session Manager\AppCompatCache"
-        reg.exe unload HKLM\TempSystem | Out-Null
-        $shimCache | Out-File -FilePath $outputFile
     }
 
     Write-Output "[ done ]"
@@ -393,19 +314,6 @@ function Get-UserTypedPaths {
 # [END] Forensics - Deleted Items & File Existence
 
 # [START] Forensics - Files & Folders Opened
-function Get-RecentFiles {
-    Write-Output "[+] Gathering Recent File Cache ..."
-    $ir_recentfiles_path = Join-Path $Global:irPath "\${ComputerName}_RecentFiles"
-    New-Item -Path $ir_recentfiles_path -Type Directory | Out-Null
-
-    $recentfiles_path = "C:\Windows\AppCompat\Programs\RecentFileCache.bcf"
-
-    if (Test-Path $recentfiles_path) {
-        Copy-Item -Path $recentfiles_path -Destination $ir_recentfiles_path
-    }
-
-    Write-Output "[ done ]"
-}
 
 function Get-LnkFiles {
     Write-Output "[+] Gathering LNK files ..."
@@ -423,28 +331,6 @@ function Get-LnkFiles {
     }
 }
 
-function Get-OpenSaveMRU {
-    Write-Output "[+] Gathering OpenSavePidlMRU from NTUSER.DAT ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_OpenSaveMRU.txt"
-
-    $ntuserPath = "C:\Users\*\NTUSER.DAT"
-    $users = Get-ChildItem "C:\Users" | Where-Object { Test-Path "$($_.FullName)\NTUSER.DAT" }
-
-    foreach ($user in $users) {
-        $username = $user.Name
-        $ntuser = "$($user.FullName)\NTUSER.DAT"
-        if (Test-Path $ntuser) {
-            reg.exe load HKU\TempHive $ntuser | Out-Null
-            $openSaveMRU = Get-ItemProperty -Path "HKU\TempHive\Software\Microsoft\Windows\CurrentVersion\Explorer\ComDlg32\OpenSavePidlMRU"
-            reg.exe unload HKU\TempHive | Out-Null
-            Add-Content -Path $outputFile -Value "[$username]"
-            Add-Content -Path $outputFile -Value $openSaveMRU
-            Add-Content -Path $outputFile -Value ""
-        }
-    }
-
-    Write-Output "[ done ]"
-}
 # [END] Forensics - Files & Folders Opened
 
 # [START] Malware - Miscellaneous
@@ -647,53 +533,49 @@ function Get-KrbSessions {
     Write-Output "[*] Session List"
     $sessions
     Write-Output ""
-    Write-Output "To view further details run: klist -li [logon_id]"
+    Write-Output "Kerberos sessions succesfully obtained. To view further details run: klist -li [logon_id]"
 }
 # [END] Forensics - Miscellaneous
+
+$outputLog = "C:\Windows\Temp\IR\0 - Kestrel_Output.txt"
+Start-Transcript -Path $outputLog -Force
 
 # Function to invoke all modules at once
 function Invoke-AllIRModules {
     Write-Output "[+] Running all IR modules ..."
-	# [Malware - Persistence]
-	Get-AutoRuns
-	Get-Services
-	Get-InstalledSoftware
-	Get-DNSCache
-	Get-RunningProcesses
+    # [Malware - Persistence]
+    Get-AutoRuns
+    Get-Services
+    Get-InstalledSoftware
+    Get-DNSCache
+    Get-RunningProcesses
 
-	# [Forensics - Evidence of Execution]
-	Get-Prefetch
-	Get-PEFiles
-	Get-Amcache
-	Get-JumpLists
-	Get-LastVisitedMRU
-	Get-UserAssist
-	Get-SRUM
+    # [Forensics - Evidence of Execution]
+    Get-Prefetch
+    Get-PEFiles
+    Get-JumpLists
+    Get-SRUM
 
-	# [Forensics - Deleted Items & File Existence]
-	Get-RecycleBin
-	Get-Shimcache
-	Get-Thumbcache
-	Get-WordWheelQuery
-	Get-OfficeRecentFiles
+    # [Forensics - Deleted Items & File Existence]
+    Get-RecycleBin
+    Get-Thumbcache
+    Get-WordWheelQuery
+    Get-OfficeRecentFiles
 
-	# [Forensics - Files & Folders Opened]
-	Get-LNKFiles
-	Get-RecentFiles
-	Get-OpenSaveMRU
-	Get-OfficeRecentFiles
+    # [Forensics - Files & Folders Opened]
+    Get-LNKFiles
+    Get-OfficeRecentFiles
 
-	# [Malware - Miscellaneous]
-	Get-OfficeFiles
-	Get-ScriptFiles
+    # [Malware - Miscellaneous]
+    Get-OfficeFiles
+    Get-ScriptFiles
 
-	# [Forensics - Miscellaneous]
-	Get-EventLogs
-	Get-Hidden
-	Get-InstalledWindowsUpdates
-	Get-BrowserExtensions
-	Get-KrbSessions
-}
+    # [Forensics - Miscellaneous]
+    Get-EventLogs
+    Get-Hidden
+    Get-InstalledWindowsUpdates
+    Get-BrowserExtensions
+    Get-KrbSessions
 
 if ($module) {
     if ($folder) {
@@ -702,11 +584,10 @@ if ($module) {
         }
 
         $Global:irPath = $folder
-    }
-    else {
+    } else {
         # fix output directory if not provided
         if (-Not (Test-Path c:\Windows\Temp\IR)) {
-            New-Item -Path  c:\Windows\Temp\IR -Type Directory -Force | Out-Null
+            New-Item -Path c:\Windows\Temp\IR -Type Directory -Force | Out-Null
         }
         $Global:irPath = "C:\Windows\Temp\IR"
     }
@@ -724,23 +605,17 @@ if ($module) {
         # [Forensics - Evidence of Execution]
         prefetch { Get-Prefetch }
         pefiles { Get-PEFiles }
-        amcache { Get-Amcache }
-        recyclebin { Get-RecycleBin}
+        recyclebin { Get-RecycleBin }
         jumplists { Get-JumpLists }
-        lastvisitedmru { Get-LastVisitedMRU }
-        userassist { Get-UserAssist }
         srum { Get-SRUM }
 
         # [Forensics - Deleted Items & File Existence]
-        shimcache { Get-Shimcache }
         thumbcache { Get-Thumbcache }
         wordwheelquery { Get-WordWheelQuery }
         usertypedpaths { Get-UserTypedPaths }
 
         # [Forensics - Files & Folders Opened]
         lnkfiles { Get-LNKFiles }
-        recentfiles { Get-RecentFiles }
-        opensavemru { Get-OpenSaveMRU }
         officerecentfiles { Get-OfficeRecentFiles }
 
         # [Malware - Miscellaneous]
@@ -758,8 +633,10 @@ if ($module) {
         help { usage }
         default { usage }
     }
-}
-else {
+} else {
     usage
     exit
 }
+Stop-Transcript
+Write-Host "IR artifacts saved in $Global:irPath" -ForegroundColor Yellow -BackgroundColor Black
+Write-Host "See the console output in $outputLog" -ForegroundColor Yellow -BackgroundColor Black
