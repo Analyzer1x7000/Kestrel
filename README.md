@@ -17,7 +17,7 @@ To run Kestrel from the CrowdStrike RTR console:
 ```
   runscript -CloudFile='Kestrel' -CommandLine='-module all'
   OR 
-  runscript -CloudFile='Kestrel' -CommandLine='-module Services'"
+  runscript -CloudFile='Kestrel' -CommandLine='-module Services'
 ```
 
 ## Running Kestrel Directly w/ Powershell
