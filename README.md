@@ -51,22 +51,17 @@ MODULES
   {Forensics - Evidence of Execution}
     Prefetch              : Get list of files in prefetch
     PEFiles               : Get list of PE files and hashes in user writeable locations
-    Amcache               : Get a copy of Amcache.hve 
     JumpLists             : Get a copy of JumpLists (AutomaticDestinations & CustomDestinations)
-    LastVisitedMRU        : Get a copy of LastVisitedPidlMRU from NTUSER.DAT hive
-    UserAssist            : Get a copy of UserAssist from NTUSER.DAT hive
     SRUM                  : Get a copy of SRUDB.DAT
   
   {Forensics - Deleted Items & File Existence}
     RecycleBin            : Get a copy of the contents of $Recycle.Bin
-    Shimcache             : Get a copy of AppCompatCache from SYSTEM hive
     Thumbcache            : Get a copy of the Thumbcache from user's %AppData% folder
     WordWheelQuery        : Get a copy of WordWheelQuery key from NTUSER.DAT hive
     UserTypedPaths        : Get a copy of TypedPaths from NTUSER.DAT hive
   
   {Forensics - Files & Folders Opened}
     LNKFiles              : Get LNK files on desktop and recent files list
-    RecentFiles           : Get history of recent files
     OpenSaveMRU           : Get a copy of OpenSavePidlMRU from NTUSER.DAT hive
     OfficeRecentfiles     : Get Office file MRU lists from NTUSER.DAT hive
   
