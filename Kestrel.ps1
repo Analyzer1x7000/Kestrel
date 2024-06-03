@@ -576,6 +576,7 @@ function Invoke-AllIRModules {
     Get-InstalledWindowsUpdates
     Get-BrowserExtensions
     Get-KrbSessions
+}
 
 if ($module) {
     if ($folder) {
@@ -637,6 +638,27 @@ if ($module) {
     usage
     exit
 }
+#Stop-Transcript
+#Write-Host "IR artifacts saved in $Global:irPath" -ForegroundColor Yellow -BackgroundColor Black
+#Write-Host "See the console output in $outputLog" -ForegroundColor Yellow -BackgroundColor Black
+
+# Stop the transcript and inform the user
 Stop-Transcript
 Write-Host "IR artifacts saved in $Global:irPath" -ForegroundColor Yellow -BackgroundColor Black
 Write-Host "See the console output in $outputLog" -ForegroundColor Yellow -BackgroundColor Black
+
+# Compress the IR folder into a ZIP file
+Write-Output "[+] Compressing the IR folder into IR.zip ..."
+$zipFilePath = Join-Path $Global:irPath "IR.zip"
+
+if (Test-Path $zipFilePath) {
+    Remove-Item -Path $zipFilePath -Force
+}
+
+try {
+    Compress-Archive -Path $Global:irPath\* -DestinationPath $zipFilePath
+    Write-Output "[ done ]"
+    Write-Host "IR folder compressed to $zipFilePath" -ForegroundColor Yellow -BackgroundColor Black
+} catch {
+    Write-Output "[!] Failed to compress IR folder: $_"
+}
