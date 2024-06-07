@@ -3,7 +3,7 @@ Param (
     [string] $module,
 
     [Parameter(Mandatory = $false)]
-    [string] $folder
+    [string] $folder = "C:\Windows\Temp\IR"
 )
 
 [string] $date = Get-Date -Format yyyyMMddHHmmss
@@ -51,13 +51,20 @@ MODULES
     HiddenFilesDirs       : Get hidden files and directories
     WindowsUpdates        : Get installed windows updates
     BrowserExtensions     : Get list of extensions for Chrome and Firefox
-    KrbSessions           : Get list of kerberos sessions"
+    KrbSessions           : Get list of kerberos sessions
+	Recall				  : Gathers screenshots and other data from Microsoft's Recall feature"
 }
+
+# Ensure the output directory exists
+if (-Not (Test-Path $folder)) {
+    New-Item -Path $folder -Type Directory -Force | Out-Null
+}
+$Global:irPath = $folder
 
 # [START] Malware - Persistence
 function Get-AutoRuns {
     Write-Output "[+] Gathering Windows AutoRuns ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_AutoRuns.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_AutoRuns.csv"
     $results = Get-CimInstance -Class Win32_StartupCommand | Select-Object Name, Caption, Description, Command, Location, User
     $results | Export-Csv -NoTypeInformation -Path $outputFile
     Write-Output "[ done ]"
@@ -65,7 +72,7 @@ function Get-AutoRuns {
 
 function Get-Services {
     Write-Output "[+] Gathering Windows Services ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_Services.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_Services.csv"
     $results = Get-CimInstance -Class Win32_Service -Filter "Caption LIKE '%'" | Select-Object Caption, Description, DisplayName, Name, PathName, ProcessId, StartMode, State, Status
     $results | Export-Csv -NoTypeInformation -Path $outputFile
     Write-Output "[ done ]"
@@ -73,7 +80,7 @@ function Get-Services {
 
 function Get-InstalledSoftware {
     Write-Output "[+] Gathering Installed Software ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_InstalledSoftware.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_InstalledSoftware.csv"
     $regPaths = @("HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
         "HKEY_LOCAL_MACHINE\SOFTWARE\Wow6432node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\*")
 
@@ -88,14 +95,14 @@ function Get-InstalledSoftware {
 
 function Get-DNSCache {
     Write-Output "[+] Gathering DNS Client Cache ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_DNSClientCache.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_DNSClientCache.csv"
     Get-DnsClientCache | Select-Object TTL, Data, DataLength, Entry, Name, TimeToLive, Type | Export-Csv -NoTypeInformation -Path $outputFile
     Write-Output "[ done ]"
 }
 
 function Get-RunningProcesses {
     Write-Output "[+] Gathering Running Processes ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_Processes.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_Processes.csv"
 
     $procs = Get-Process -IncludeUserName
 
@@ -114,7 +121,7 @@ function Get-RunningProcesses {
 # [START] Forensics - Evidence of Execution
 function Get-Prefetch {
     Write-Output "[+] Gathering Prefetch Cache ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_Prefetch.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_Prefetch.csv"
     $results = Get-ChildItem -Path "C:\Windows\Prefetch\" -Filter *.pf -ErrorAction SilentlyContinue | Select-Object Name, FullName, CreationTimeUtc, LastAccessTimeUtc, LastWriteTimeUtc
 
     $results | Export-Csv -NoTypeInformation -Path $outputFile
@@ -123,7 +130,7 @@ function Get-Prefetch {
 
 function Get-PEFiles {
     Write-Output "[+] Gathering list of PE files in TEMP locations ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_PEFiles.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_PEFiles.csv"
 
     $PEExtPattern = ".exe|.dll|.sys"
     $filePaths = @(
@@ -159,7 +166,7 @@ function Get-PEFiles {
 
 function Get-JumpLists {
     Write-Output "[+] Gathering JumpLists ..."
-    $ir_jumplists_path = Join-Path $Global:irPath "\${ComputerName}_JumpLists"
+    $ir_jumplists_path = Join-Path $Global:irPath "${ComputerName}_JumpLists"
     New-Item -Path $ir_jumplists_path -Type Directory -Force | Out-Null
 
     $jumplist_paths = @("${env:APPDATA}\Microsoft\Windows\Recent\AutomaticDestinations", "${env:APPDATA}\Microsoft\Windows\Recent\CustomDestinations")
@@ -176,7 +183,7 @@ function Get-JumpLists {
 
 function Get-SRUM {
     Write-Output "[+] Gathering SRUM data ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_SRUDB.DAT"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_SRUDB.DAT"
 
     $srum_path = "C:\Windows\System32\sru\SRUDB.dat"
     if (Test-Path $srum_path) {
@@ -190,7 +197,7 @@ function Get-SRUM {
 # [START] Forensics - Deleted Items & File Existence
 function Get-RecycleBin {
     Write-Output "[+] Gathering Recycle Bin contents ..."
-    $ir_recyclebin_path = Join-Path $Global:irPath "\${ComputerName}_RecycleBin"
+    $ir_recyclebin_path = Join-Path $Global:irPath "${ComputerName}_RecycleBin"
     New-Item -Path $ir_recyclebin_path -Type Directory -Force | Out-Null
 
     $recycleBinPath = "C:\$Recycle.Bin\*"
@@ -204,7 +211,7 @@ function Get-RecycleBin {
 
 function Get-Thumbcache {
     Write-Output "[+] Gathering Thumbcache ..."
-    $ir_thumbcache_path = Join-Path $Global:irPath "\${ComputerName}_Thumbcache"
+    $ir_thumbcache_path = Join-Path $Global:irPath "${ComputerName}_Thumbcache"
     New-Item -Path $ir_thumbcache_path -Type Directory -Force | Out-Null
 
     $thumbcachePath = "C:\Users\*\AppData\Local\Microsoft\Windows\Explorer\thumbcache_*"
@@ -218,7 +225,7 @@ function Get-Thumbcache {
 
 function Get-WordWheelQuery {
     Write-Output "[+] Gathering WordWheelQuery from NTUSER.DAT ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_WordWheelQuery.txt"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_WordWheelQuery.txt"
 
     $ntuserPath = "C:\Users\*\NTUSER.DAT"
     $users = Get-ChildItem "C:\Users" | Where-Object { Test-Path "$($_.FullName)\NTUSER.DAT" }
@@ -241,7 +248,7 @@ function Get-WordWheelQuery {
 
 function Get-OfficeRecentFiles {
     Write-Output "[+] Gathering Office Recent Files from NTUSER.DAT ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_OfficeRecentFiles.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_OfficeRecentFiles.csv"
     $results = @()
 
     $ntuserPath = "C:\Users\*\NTUSER.DAT"
@@ -291,7 +298,7 @@ function Get-OfficeRecentFiles {
 
 function Get-UserTypedPaths {
     Write-Output "[+] Gathering UserTypedPaths from NTUSER.DAT ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_UserTypedPaths.txt"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_UserTypedPaths.txt"
 
     $ntuserPath = "C:\Users\*\NTUSER.DAT"
     $users = Get-ChildItem "C:\Users" | Where-Object { Test-Path "$($_.FullName)\NTUSER.DAT" }
@@ -317,7 +324,7 @@ function Get-UserTypedPaths {
 
 function Get-LnkFiles {
     Write-Output "[+] Gathering LNK files ..."
-    $ir_lnkfiles_path = Join-Path $Global:irPath "\${ComputerName}_LnkFiles"
+    $ir_lnkfiles_path = Join-Path $Global:irPath "${ComputerName}_LnkFiles"
     New-Item -Path $ir_lnkfiles_path -Type Directory | Out-Null
 
     $lnkfiles_path = @("${env:LOCALAPPDATA}\Microsoft\Windows\Recent\", "${env:LOCALAPPDATA}\Microsoft\Office\Recent\", "C:\Users\*\Desktop\")
@@ -336,7 +343,7 @@ function Get-LnkFiles {
 # [START] Malware - Miscellaneous
 function Get-OfficeFiles {
     Write-Output "[+] Gathering list of Office files in TEMP locations ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_OfficeFiles.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_OfficeFiles.csv"
 
     $PEExtPattern = ".docx|.docm|.xlsx|.xlsm|.pptx|.pptm"
     $filePaths = @(
@@ -372,7 +379,7 @@ function Get-OfficeFiles {
 
 function Get-ScriptFiles {
     Write-Output "[+] Gathering list of Script files in TEMP locations ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_ScriptFiles.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_ScriptFiles.csv"
 
     $PEExtPattern = ".bat|.vbs|.cmd|.js|.com|.ps1|.psm|.psm1|.psd"
     $filePaths = @(
@@ -410,7 +417,7 @@ function Get-ScriptFiles {
 # [START] Forensics - Miscellaneous
 function Get-EventLogs {
     Write-Output "[+] Gathering Event Logs ..."
-    $ir_evtx_path = Join-Path $Global:irPath "\${ComputerName}_evtx"
+    $ir_evtx_path = Join-Path $Global:irPath "${ComputerName}_evtx"
     New-Item -Path $ir_evtx_path -Type Directory | Out-Null
     $evtx_files = Get-ChildItem -Path "C:\Windows\system32\winevt\logs\" -Filter *.evtx -ErrorAction SilentlyContinue
 
@@ -423,7 +430,7 @@ function Get-EventLogs {
 
 function Get-Hidden {
     Write-Output "[+] Gathering hidden files and directories ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_HiddenFilesDirs.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_HiddenFilesDirs.csv"
 
     Get-ChildItem C:\ -Recurse -Hidden -ErrorAction SilentlyContinue | Export-Csv -Path $outputFile -NoTypeInformation
     Write-Output "[ done ]"
@@ -431,8 +438,8 @@ function Get-Hidden {
 
 function Get-InstalledWindowsUpdates {
     Write-Output "[+] Gathering installed Windows Updates and Hotfixes ..."
-    $outputFileHotFixes = Join-Path $Global:irPath "\${ComputerName}_WinHotfixes.csv"
-    $outputFileWinUpdates = Join-Path $Global:irPath "\${ComputerName}_WinUpdates.csv"
+    $outputFileHotFixes = Join-Path $Global:irPath "${ComputerName}_WinHotfixes.csv"
+    $outputFileWinUpdates = Join-Path $Global:irPath "${ComputerName}_WinUpdates.csv"
 
     Get-HotFix | Select-Object InstalledOn, InstalledBy, HotFixID, Description | Export-Csv -NoTypeInformation -Path $outputFileHotFixes
     $session = New-Object -ComObject Microsoft.Update.Session
@@ -442,7 +449,7 @@ function Get-InstalledWindowsUpdates {
 
 function Get-BrowserExtensions {
     Write-Output "[+] Gathering browser extensions for all users and major browsers ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_BrowserExtensions.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_BrowserExtensions.csv"
     $chromePath = "C:\Users\*\AppData\Local\Google\Chrome\User Data\Default\Extensions"
     $firefoxPath = "C:\Users\*\AppData\Roaming\Mozilla\Firefox\Profiles"
 
@@ -506,7 +513,7 @@ function Get-BrowserExtensions {
 
 function Get-KrbSessions {
     Write-Output "[+] Gathering klist sessions ..."
-    $outputFile = Join-Path $Global:irPath "\${ComputerName}_klistsessions.csv"
+    $outputFile = Join-Path $Global:irPath "${ComputerName}_klistsessions.csv"
 
     $sessions = klist sessions
     $klistArray = @()
@@ -533,8 +540,158 @@ function Get-KrbSessions {
     Write-Output "[*] Session List"
     $sessions
     Write-Output ""
-    Write-Output "Kerberos sessions succesfully obtained. To view further details run: klist -li [logon_id]"
+    Write-Output "Kerberos sessions successfully obtained. To view further details run: klist -li [logon_id]"
 }
+
+function Get-Recall {
+    param (
+        [string]$FromDate = $null,
+        [string]$ToDate = $null,
+        [string]$SearchTerm = $null
+    )
+	
+    Write-Output "[+] Gathering contents from Microsoft Recall ..."
+
+    function Modify-Permissions {
+        param (
+            [string]$Path
+        )
+        try {
+            icacls $Path /grant "$($env:USERNAME):(OI)(CI)F" /T /C /Q | Out-Null
+            Write-Host "Permissions modified for $Path and all its subdirectories and files" -ForegroundColor Green
+        } catch {
+            Write-Host "Failed to modify permissions for $Path: $($_)" -ForegroundColor Red
+        }
+    }
+
+    $username = $env:USERNAME
+    $basePath = "C:\Users\$username\AppData\Local\CoreAIPlatform.00\UKP"
+
+    if (-Not (Test-Path $basePath)) {
+        Write-Host "[!] Base path does not exist."
+        return
+    }
+
+    Modify-Permissions -Path $basePath
+
+    $guidFolder = Get-ChildItem -Path $basePath -Directory | Select-Object -First 1
+
+    if (-Not $guidFolder) {
+        Write-Host "[!] Could not find the GUID folder."
+        return
+    }
+
+    $guidFolderPath = $guidFolder.FullName
+    Write-Host "[+] Recall folder found: $guidFolderPath"
+
+    $dbPath = Join-Path -Path $guidFolderPath -ChildPath "ukg.db"
+    $imageStorePath = Join-Path -Path $guidFolderPath -ChildPath "ImageStore"
+
+    if (-Not (Test-Path $dbPath) -or -Not (Test-Path $imageStorePath)) {
+        Write-Host "[!] Windows Recall feature not found. Nothing to extract."
+        return
+    }
+
+    $timestamp = (Get-Date).ToString("yyyy-MM-dd-HH-mm")
+    $extractionFolder = Join-Path -Path $Global:irPath -ChildPath "${timestamp}_Recall_Extraction"
+    New-Item -ItemType Directory -Path $extractionFolder -Force | Out-Null
+    Write-Host "`nCreating extraction folder: $extractionFolder`n"
+
+    Copy-Item -Path $dbPath -Destination $extractionFolder
+    Copy-Item -Path $imageStorePath -Destination (Join-Path -Path $extractionFolder -ChildPath "ImageStore") -Recurse -Force
+
+    Get-ChildItem -Path (Join-Path -Path $extractionFolder -ChildPath "ImageStore") | ForEach-Object {
+        $imagePath = $_.FullName
+        if (-Not ($imagePath -match "\.jpg$")) {
+            Rename-Item -Path $imagePath -NewName ($imagePath + ".jpg")
+        }
+    }
+
+    $dbExtractionPath = Join-Path -Path $extractionFolder -ChildPath "ukg.db"
+    try {
+        $conn = [System.Data.SQLite.SQLiteConnection]::new("Data Source=$dbExtractionPath")
+        $conn.Open()
+    } catch {
+        Write-Host "[!] Failed to open SQLite database: $($_)" -ForegroundColor Red
+        return
+    }
+
+    $cmd = $conn.CreateCommand()
+
+    $fromDateTimestamp = if ($FromDate) { [int](([DateTime]::ParseExact($FromDate, "yyyy-MM-dd", $null).ToUniversalTime() - [datetime]'1970-01-01').TotalSeconds * 1000) } else { $null }
+    $toDateTimestamp = if ($ToDate) { [int](([DateTime]::ParseExact($ToDate, "yyyy-MM-dd", $null).AddDays(1).ToUniversalTime() - [datetime]'1970-01-01').TotalSeconds * 1000) } else { $null }
+
+    $query = "SELECT WindowTitle, TimeStamp, ImageToken FROM WindowCapture WHERE (WindowTitle IS NOT NULL OR ImageToken IS NOT NULL)"
+    $cmd.CommandText = $query
+    $reader = $cmd.ExecuteReader()
+
+    $capturedWindows = @()
+    $imagesTaken = @()
+
+    while ($reader.Read()) {
+        $windowTitle = $reader["WindowTitle"]
+        $timestamp = [int]$reader["TimeStamp"]
+        $imageToken = $reader["ImageToken"]
+        $readableTimestamp = [datetime]'1970-01-01'.AddMilliseconds($timestamp).ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")
+
+        if (($null -eq $fromDateTimestamp -or $fromDateTimestamp -le $timestamp) -and ($null -eq $toDateTimestamp -or $timestamp -lt $toDateTimestamp)) {
+            if ($windowTitle) {
+                $capturedWindows += "[$readableTimestamp] $windowTitle"
+            }
+            if ($imageToken) {
+                $imagesTaken += "[$readableTimestamp] $imageToken"
+            }
+        }
+    }
+
+    $reader.Close()
+    $conn.Close()
+
+    $capturedWindowsCount = $capturedWindows.Count
+    $imagesTakenCount = $imagesTaken.Count
+    $output = @(
+        "Captured Windows: $capturedWindowsCount",
+        "Images Taken: $imagesTakenCount"
+    )
+
+    if ($SearchTerm) {
+        try {
+            $conn.Open()
+            $searchQuery = "SELECT c1, c2 FROM WindowCaptureTextIndex_content WHERE c1 LIKE '%$SearchTerm%' OR c2 LIKE '%$SearchTerm%'"
+            $cmd.CommandText = $searchQuery
+            $searchReader = $cmd.ExecuteReader()
+
+            $searchResults = @()
+            while ($searchReader.Read()) {
+                $searchResults += "c1: $($searchReader["c1"]), c2: $($searchReader["c2"])"
+            }
+
+            $searchResultsCount = $searchResults.Count
+            $output += "Search results for '$SearchTerm': $searchResultsCount"
+            $searchReader.Close()
+        } catch {
+            Write-Host "[!] Failed to execute search query: $($_)" -ForegroundColor Red
+        } finally {
+            $conn.Close()
+        }
+    }
+
+    $recallpath = Join-Path -Path $extractionFolder -ChildPath "Recall.txt"
+    Set-Content -Path $recallpath -Value "Captured Windows:`n$($capturedWindows -join "`n")`n`nImages Taken:`n$($imagesTaken -join "`n")`n"
+
+    if ($SearchTerm) {
+        Add-Content -Path $recallpath -Value "`nSearch Results:`n$($searchResults -join "`n")"
+    }
+
+    $output | ForEach-Object { Write-Host $_ }
+
+    Write-Host "`nSummary of the extraction is available in the file:"
+    Write-Host "$($recallpath)" -ForegroundColor Yellow
+    Write-Host "`nFull extraction folder path:"
+    Write-Host "$($extractionFolder)" -ForegroundColor Yellow
+    Write-Output "[ done ]"
+}
+
 # [END] Forensics - Miscellaneous
 
 $outputLog = "C:\Windows\Temp\IR\0 - Kestrel_Output.txt"
@@ -563,7 +720,7 @@ function Invoke-AllIRModules {
     Get-OfficeRecentFiles
 
     # [Forensics - Files & Folders Opened]
-    Get-LNKFiles
+    Get-LnkFiles
     Get-OfficeRecentFiles
 
     # [Malware - Miscellaneous]
@@ -576,22 +733,14 @@ function Invoke-AllIRModules {
     Get-InstalledWindowsUpdates
     Get-BrowserExtensions
     Get-KrbSessions
+	Get-Recall
 }
 
 if ($module) {
-    if ($folder) {
-        if (-Not (Test-Path $folder)) {
-            New-Item -Path $folder -Type Directory -Force | Out-Null
-        }
-
-        $Global:irPath = $folder
-    } else {
-        # fix output directory if not provided
-        if (-Not (Test-Path c:\Windows\Temp\IR)) {
-            New-Item -Path c:\Windows\Temp\IR -Type Directory -Force | Out-Null
-        }
-        $Global:irPath = "C:\Windows\Temp\IR"
+    if (-Not (Test-Path $folder)) {
+        New-Item -Path $folder -Type Directory -Force | Out-Null
     }
+    $Global:irPath = $folder
 
     switch ($module.ToLower()) {
         all { Invoke-AllIRModules }
@@ -616,7 +765,7 @@ if ($module) {
         usertypedpaths { Get-UserTypedPaths }
 
         # [Forensics - Files & Folders Opened]
-        lnkfiles { Get-LNKFiles }
+        lnkfiles { Get-LnkFiles }
         officerecentfiles { Get-OfficeRecentFiles }
 
         # [Malware - Miscellaneous]
@@ -629,6 +778,7 @@ if ($module) {
         windowsupdates { Get-InstalledWindowsUpdates }
         browserextensions { Get-BrowserExtensions }
         krbsessions { Get-KrbSessions }
+		recall { Get-Recall } 
 
         # Usage instructions
         help { usage }
@@ -638,9 +788,6 @@ if ($module) {
     usage
     exit
 }
-#Stop-Transcript
-#Write-Host "IR artifacts saved in $Global:irPath" -ForegroundColor Yellow -BackgroundColor Black
-#Write-Host "See the console output in $outputLog" -ForegroundColor Yellow -BackgroundColor Black
 
 # Stop the transcript and inform the user
 Stop-Transcript
@@ -660,5 +807,5 @@ try {
     Write-Output "[ done ]"
     Write-Host "IR folder compressed to $zipFilePath" -ForegroundColor Yellow -BackgroundColor Black
 } catch {
-    Write-Output "[!] Failed to compress IR folder: $_"
+    Write-Output "[!] Failed to compress IR folder: $($_)"
 }
