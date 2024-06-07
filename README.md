@@ -75,5 +75,6 @@ MODULES
     WindowsUpdates        : Get installed windows updates
     BrowserExtensions     : Get list of extensions for Chrome and Firefox
     KrbSessions           : Get list of kerberos sessions
+    Recall                : Gathers screenshots and other data from Microsoft's Recall feature  
 ```
 
